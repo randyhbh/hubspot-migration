@@ -9,24 +9,24 @@ import io.ktor.client.call.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import log
 import logEngagementAttachments
+import observeRateLimitAsync
 
 suspend fun loadEngagementToAttachments(engagementList: List<DealEngagements>): List<EngagementAttachments> =
     coroutineScope {
         engagementList
             .flatMap { it.engagementsIds }
             .map { engagementId ->
-                async {
-                    log("starting loading for engagementId: $engagementId")
-                    getAttachment(engagementId)
-                        .also { logEngagementAttachments(it) }
+                observeRateLimitAsync(1000L) {
+                    async {
+                        getAttachment(engagementId).also { logEngagementAttachments(it) }
+                    }
                 }
             }
             .awaitAll()
     }
 
-private suspend fun getAttachment(engagementId: Long): EngagementAttachments {
+suspend inline fun getAttachment(engagementId: Long): EngagementAttachments {
     val response =
         httpResponse("https://api.hubapi.com/engagements/v1/engagements/$engagementId").body<EngagementAttachmentsResponse>()
 

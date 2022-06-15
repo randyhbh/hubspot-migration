@@ -1,3 +1,4 @@
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -12,3 +13,13 @@ fun <K, V : Any> MutableMap<K, V>.mergeReduceInPlace(other: Map<K, V>, reduce: (
 
 fun <K, V : Any> Map<K, V>.mergeReduce(others: Map<K, V>, reduce: (V, V) -> V): Map<K, V> =
     this.toMutableMap().apply { others.forEach { merge(it.key, it.value, reduce) } }
+
+
+suspend fun <T> observeRateLimitAsync(onePerMillis: Long, block: () -> T) =
+    withContext(Dispatchers.Default) {
+        launch {
+            delay(onePerMillis)
+            log("Rate limit observed: 1 request per $onePerMillis ms")
+        }
+        block()
+    }

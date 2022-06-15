@@ -10,16 +10,19 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import log
 import logDealEngagements
+import observeRateLimitAsync
 
 suspend fun loadPipelineDealsConcurrent(dealsResponseList: List<DealsResponse>): List<DealEngagements> =
     coroutineScope {
         dealsResponseList.flatMap {
             it.deals
         }.map { deal ->
-            async {
-                log("starting loading for deal: $deal")
-                getDealEngagements(deal.id)
-                    .also { logDealEngagements(it) }
+            observeRateLimitAsync(1000L) {
+                async {
+                    log("starting loading for deal: $deal")
+                    getDealEngagements(deal.id)
+                        .also { logDealEngagements(it) }
+                }
             }
         }.awaitAll()
     }

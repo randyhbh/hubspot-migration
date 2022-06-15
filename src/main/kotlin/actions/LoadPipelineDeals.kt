@@ -5,9 +5,9 @@ import io.ktor.client.call.*
 suspend fun loadPipelineDeals() {
     var pair = Pair(0L, true)
     while (pair.second) {
-        log("Processed amount ${pair.first}")
         pair = getPipelinesDeals(pair.first)
     }
+    log("Total amount of deals ${deals.size}")
 }
 
 suspend fun getPipelinesDeals(offset: Long): Pair<Long, Boolean> {

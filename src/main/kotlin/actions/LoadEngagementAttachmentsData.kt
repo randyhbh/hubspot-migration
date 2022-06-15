@@ -10,17 +10,20 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import log
 import logEngagementAttachments
+import observeRateLimitAsync
 
 suspend fun loadEngagementAttachmentsDownloadableUrl(engagements: List<EngagementAttachments>) =
     coroutineScope {
         engagements
             .map { engagementAttachments ->
-                async {
-                    log("starting loading attachments for engagement: ${engagementAttachments.id}")
-                    val attachmentsUpdated = getFileDownloadableUrl(engagementAttachments.attachments)
-                        .also { logEngagementAttachments(engagementAttachments) }
-                    with(engagementAttachments) { attachments = attachmentsUpdated }
-                    engagementAttachments
+                observeRateLimitAsync(1000L) {
+                    async {
+                        log("starting loading attachments for engagement: ${engagementAttachments.id}")
+                        val attachmentsUpdated = getFileDownloadableUrl(engagementAttachments.attachments)
+                            .also { logEngagementAttachments(engagementAttachments) }
+                        with(engagementAttachments) { attachments = attachmentsUpdated }
+                        engagementAttachments
+                    }
                 }
             }.awaitAll()
     }

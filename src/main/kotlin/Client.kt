@@ -10,6 +10,19 @@ import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 
 val client = HttpClient(CIO) {
+    engine {
+        // this: CIOEngineConfig
+        maxConnectionsCount = 1000
+        endpoint {
+            // this: EndpointConfig
+            maxConnectionsPerRoute = 10
+            pipelineMaxSize = 10
+            keepAliveTime = 50000
+            connectTimeout = 50000
+            connectAttempts = 100
+            socketTimeout = 50000
+        }
+    }
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -39,7 +52,7 @@ suspend fun httpResponse(
                 ?: error("Unknown rate limiting Header")
 
         when (requestRemaining) {
-            0 -> delay(secondsRemaining.seconds + 1.seconds).also { log("Delaying for $it") }
+            0 -> delay(secondsRemaining.seconds + 5.seconds).also { log("Delaying for ${secondsRemaining.seconds} + ${5.seconds}") }
         }
 
         httpResponse

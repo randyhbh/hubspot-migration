@@ -17,21 +17,22 @@ suspend fun loadEngagementToAttachments(engagementList: List<DealEngagements>): 
         engagementList
             .flatMap { it.engagementsIds }
             .map { engagementId ->
-                observeRateLimitAsync(1000L) {
+                observeRateLimitAsync(500L) {
                     async {
-                        getAttachment(engagementId).also { logEngagementAttachments(it) }
+                        getAttachment(engagementId)?.also { logEngagementAttachments(it) }
                     }
                 }
             }
             .awaitAll()
+            .filterNotNull()
     }
 
-suspend inline fun getAttachment(engagementId: Long): EngagementAttachments {
+suspend inline fun getAttachment(engagementId: Long): EngagementAttachments? {
     val response =
         httpResponse("https://api.hubapi.com/engagements/v1/engagements/$engagementId").body<EngagementAttachmentsResponse>()
 
     return when {
-        response.attachments.isEmpty() -> EngagementAttachments(engagementId, emptyList())
+        response.attachments.isEmpty() -> null
 
         else -> {
             val attachments = response.attachments.map { Attachment(it.id) }

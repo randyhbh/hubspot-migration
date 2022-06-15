@@ -16,7 +16,7 @@ suspend fun loadEngagementAttachmentsDownloadableUrl(engagements: List<Engagemen
     coroutineScope {
         engagements
             .map { engagementAttachments ->
-                observeRateLimitAsync(1000L) {
+                observeRateLimitAsync(500L) {
                     async {
                         log("starting loading attachments for engagement: ${engagementAttachments.id}")
                         val attachmentsUpdated = getFileDownloadableUrl(engagementAttachments.attachments)

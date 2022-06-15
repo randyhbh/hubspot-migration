@@ -15,12 +15,13 @@ val client = HttpClient(CIO) {
         maxConnectionsCount = 1000
         endpoint {
             // this: EndpointConfig
-            maxConnectionsPerRoute = 10
-            pipelineMaxSize = 10
-            keepAliveTime = 50000
+            maxConnectionsPerRoute = 100
+            pipelineMaxSize = 20
+            keepAliveTime = 5000
             connectTimeout = 50000
             connectAttempts = 100
             socketTimeout = 50000
+            requestTimeout = 5000
         }
     }
     install(ContentNegotiation) {
@@ -38,22 +39,9 @@ suspend fun httpResponse(
     download: Boolean? = null
 ): HttpResponse =
     client.get(url) {
-        parameter("hapikey", "")
+        parameter("hapikey", "1990e9bd-3c3f-4a16-8cde-487c968503e5")
         parameter("properties", "pipeline")
         offset?.let { parameter("offset", offset) }
         limit?.let { parameter("limit", limit) }
         download?.let { onDownload { bytesSentTotal, contentLength -> println("Received $bytesSentTotal bytes from $contentLength") } }
-    }.let { httpResponse ->
-        val requestRemaining =
-            httpResponse.headers["X-HubSpot-RateLimit-Remaining"]?.toInt() ?: error("Unknown rate limiting Header")
-
-        val secondsRemaining =
-            httpResponse.headers["X-HubSpot-RateLimit-Secondly-Remaining"]?.toInt()
-                ?: error("Unknown rate limiting Header")
-
-        when (requestRemaining) {
-            0 -> delay(secondsRemaining.seconds + 5.seconds).also { log("Delaying for ${secondsRemaining.seconds} + ${5.seconds}") }
-        }
-
-        httpResponse
     }

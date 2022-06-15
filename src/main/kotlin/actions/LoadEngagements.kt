@@ -14,20 +14,22 @@ import observeRateLimitAsync
 
 suspend fun loadPipelineDealsConcurrent(dealsResponseList: List<DealsResponse>): List<DealEngagements> =
     coroutineScope {
-        dealsResponseList.flatMap {
-            it.deals
-        }.map { deal ->
-            observeRateLimitAsync(1000L) {
-                async {
-                    log("starting loading for deal: $deal")
-                    getDealEngagements(deal.id)
-                        .also { logDealEngagements(it) }
+        val deals = dealsResponseList.flatMap { it.deals }
+        val dealSize = deals.size
+
+        deals
+            .mapIndexed { index, deal ->
+                observeRateLimitAsync(500L) {
+                    async {
+                        log("starting loading for deal: $index of $dealSize")
+                        getDealEngagements(deal.id)?.also { logDealEngagements(it) }
+                    }
                 }
-            }
-        }.awaitAll()
+            }.awaitAll()
+            .filterNotNull()
     }
 
-suspend fun getDealEngagements(id: Long): DealEngagements {
+suspend fun getDealEngagements(id: Long): DealEngagements? {
     var hasMore = true
     var offset = 0L
 
@@ -41,6 +43,6 @@ suspend fun getDealEngagements(id: Long): DealEngagements {
         hasMore = response.hasMore
         offset = response.offset
     }
-
+    if (engagementsIds.isEmpty()) return null
     return DealEngagements(dealId = id, engagementsIds = engagementsIds)
 }

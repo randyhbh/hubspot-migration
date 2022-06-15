@@ -8,8 +8,8 @@ val ktorVersion: String by project
 plugins {
     kotlin("jvm") version "1.7.0"
     kotlin("plugin.serialization") version "1.7.0"
-    application
     `maven-publish`
+    application
 }
 
 publishing {
@@ -27,9 +27,23 @@ publishing {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+
+    var coroutinesVersion = "1.6.2"
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutinesVersion")
+
+    implementation ("ch.qos.logback:logback-classic:1.2.11")
+
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")

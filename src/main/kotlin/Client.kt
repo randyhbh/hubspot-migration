@@ -30,16 +30,17 @@ suspend fun httpResponse(
         offset?.let { parameter("offset", offset) }
         limit?.let { parameter("limit", limit) }
         download?.let { onDownload { bytesSentTotal, contentLength -> println("Received $bytesSentTotal bytes from $contentLength") } }
-    }.let {
+    }.let { httpResponse ->
         val requestRemaining =
-            it.headers["X-HubSpot-RateLimit-Remaining"]?.toInt() ?: error("Unknown rate limiting Header")
+            httpResponse.headers["X-HubSpot-RateLimit-Remaining"]?.toInt() ?: error("Unknown rate limiting Header")
 
         val secondsRemaining =
-            it.headers["X-HubSpot-RateLimit-Secondly-Remaining"]?.toInt() ?: error("Unknown rate limiting Header")
+            httpResponse.headers["X-HubSpot-RateLimit-Secondly-Remaining"]?.toInt()
+                ?: error("Unknown rate limiting Header")
 
         when (requestRemaining) {
-            0 -> delay(secondsRemaining.seconds + 1.seconds)
+            0 -> delay(secondsRemaining.seconds + 1.seconds).also { log("Delaying for $it") }
         }
 
-        it
+        httpResponse
     }
